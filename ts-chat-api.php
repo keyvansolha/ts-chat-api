@@ -2,7 +2,7 @@
 /**
  * Plugin Name: TehranSpeaker Chatbot API
  * Description: مسیرهای ts-chat/v1 برای چت‌بات (خبرم کن، سؤال متداول پیشنهادی، کمپین‌های عمومی) با یک کلید مشترک سمت سرور.
- * Version: 1.0.0
+ * Version: 1.0.1
  * Requires at least: 6.4
  * Requires PHP: 7.4
  * Requires Plugins: woocommerce

@@ -208,6 +208,8 @@ class TS_Chat_API_Campaigns {
 		$match    = (string) $request->get_header( 'if_none_match' );
 		$response = new WP_REST_Response( $match === $etag ? null : $campaigns, $match === $etag ? 304 : 200 );
 		$response->header( 'ETag', $etag );
+		// .htaccess سایت ETag را حذف می‌کند (Header unset ETag)؛ همان برچسب در این هدر هم می‌آید.
+		$response->header( 'X-TS-Content-Tag', $etag );
 		$response->header( 'Cache-Control', 'private, max-age=60' );
 		$response->header( 'Vary', 'Authorization' );
 

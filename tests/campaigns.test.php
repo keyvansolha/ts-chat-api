@@ -59,6 +59,7 @@ foreach ( [ 'HIDDENCODE', 'STAFF', 'VIP', 'a@example.com', 'usage', 'ONEOFF' ] a
 	ts_assert( strpos( $json, $secret ) === false, "{$secret} never appears in the response" );
 }
 ts_assert( preg_match( '/^"[0-9a-f]{32}"$/', $response->headers['ETag'] ) === 1, 'an ETag is sent' );
+ts_same( $response->headers['ETag'], $response->headers['X-TS-Content-Tag'], 'the tag survives the site stripping ETag' );
 ts_same( 'private, max-age=60', $response->headers['Cache-Control'], 'cacheable for a minute by the caller only' );
 
 $cached = ts_request( 'GET', '/ts-chat/v1/campaigns', null, [], TS_CHAT_API_SECRET, [ 'if_none_match' => $response->headers['ETag'] ] );

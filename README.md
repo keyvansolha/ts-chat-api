@@ -88,7 +88,8 @@ date, has started (start date at 00:00 site time, otherwise its creation time),
 has not expired, is not restricted to customer e-mails and has uses left.
 Products are reported as parent ids, categories as term ids, times as ISO 8601
 with the site timezone. Usage counts, e-mail restrictions and customer data are
-never returned. Responses carry an `ETag` (and answer `If-None-Match` with 304)
+never returned. Responses carry an `ETag` and the same value in `X-TS-Content-Tag`
+(the site's `.htaccess` strips `ETag`), answer `If-None-Match` with 304,
 and `Cache-Control: private, max-age=60`.
 
 ## Tests
