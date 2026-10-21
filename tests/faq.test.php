@@ -29,6 +29,7 @@ ts_same( 'chat:c_8f2a', get_post_meta( $id, '_ts_chat_source_ref', true ), 'sour
 
 $dupe = ts_request( 'POST', '/ts-chat/v1/product-faq', array_merge( $body, [ 'question' => 'با آيفون هم كار مي‌كند ؟' ] ) );
 ts_same( [ 200, [ 'status' => 'exists', 'id' => $id ] ], [ $dupe->status, $dupe->data ], 'same product + normalised question → 200 exists' );
+ts_same( TS_Chat_API_FAQ::question_key( 'آزمون؛ لطفاً تأیید نشود' ), TS_Chat_API_FAQ::question_key( 'آزمون لطفا تایید نشود' ), 'hamza and tanween variants are the same question' );
 $own = ts_request( 'POST', '/ts-chat/v1/product-faq', [ 'product_id' => 300, 'question' => 'گارانتی دارد', 'answer' => 'بله' ] );
 ts_same( [ 200, 'exists' ], [ $own->status, $own->data['status'] ], 'a question already in the product FAQ field is a duplicate too' );
 $other = ts_request( 'POST', '/ts-chat/v1/product-faq', array_merge( $body, [ 'product_id' => 300 ] ) );

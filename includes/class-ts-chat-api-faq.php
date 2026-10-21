@@ -129,9 +129,17 @@ class TS_Chat_API_FAQ {
 				'ك' => 'ک',
 				'ۀ' => 'ه',
 				'ة' => 'ه',
+				'أ' => 'ا',
+				'إ' => 'ا',
+				'آ' => 'ا',
+				'ٱ' => 'ا',
+				'ؤ' => 'و',
+				'ئ' => 'ی',
 				"\u{200c}" => '',
 			]
 		);
+		// اعراب، تنوین و تشدید («لطفاً» = «لطفا») در مقایسه نقشی ندارند.
+		$question = (string) preg_replace( '/\p{Mn}+/u', '', $question );
 		$question = function_exists( 'mb_strtolower' ) ? mb_strtolower( $question, 'UTF-8' ) : strtolower( $question );
 
 		return (string) preg_replace( '/[\p{P}\p{S}\p{Z}\s]+/u', '', $question );
