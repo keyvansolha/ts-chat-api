@@ -1,8 +1,9 @@
 # TehranSpeaker Chatbot API (`ts-chat-api`)
 
-Server-to-server routes the chatbot calls, under `/wp-json/ts-chat/v1/`. Every
-route requires one shared secret and stays closed (503 `unavailable`) until it
-is configured.
+Routes the chatbot calls, under `/wp-json/ts-chat/v1/`. The server-to-server
+routes require one shared secret and stay closed (503 `unavailable`) until it is
+configured. `GET /products/{id}/companions` is public: the chat widget reads it
+from the shopper's browser and it returns catalogue data only.
 
 | Route | Task | Purpose |
 | --- | --- | --- |
@@ -10,6 +11,9 @@ is configured.
 | `GET /stock-alerts/status?product_id=&mobile=[&variation_id=]` | WP-110 | `{subscribed: bool}` |
 | `POST /product-faq` | WP-116 | suggest a product FAQ item; a human approves it in wp-admin |
 | `GET /campaigns` | WP-117 | active, public campaigns marked by marketing on WooCommerce coupons |
+| `GET /products/{id}/companions` (public) | WP-126 | the product's «اقلام همراه» |
+
+The plugin also lets the chat origin read Store API products (WP-127, see below).
 
 ## Secret
 
@@ -92,6 +96,54 @@ never returned. Responses carry an `ETag` and the same value in `X-TS-Content-Ta
 (the site's `.htaccess` strips `ETag`), answer `If-None-Match` with 304,
 and `Cache-Control: private, max-age=60`.
 
+## `GET /products/{id}/companions` (public)
+
+Source: the **«اقلام همراه»** tab on the product edit screen (theme `amazing`,
+`lib/Product/functions/product-tabs.php`), stored as post meta
+`wbsIncludedProducts` on the product: an ordered list of
+`{product: {id, attrs?}, title?}`. The same meta draws the «اقلام همراه» box on
+the product page. To pair PartyBox 330 with its bag, open product 281821 →
+«اقلام همراه» → «افزودن» → pick 291846 → «ذخیره تغییرات».
+
+```json
+{ "items": [
+  { "productId": 291846, "name": "کیف اسپیکر پارتی باکس جی بی ال مدل 330",
+    "image": "https://www.tehranspeaker.com/wp-content/uploads/…-200x200.jpg",
+    "price": 4300000, "inStock": true, "isVariable": true }
+] }
+```
+
+* At most 3 items: in-stock ones first, each group in the shop's order.
+  Unpublished, deleted, duplicate and self references are skipped.
+* `price`: whole Toman (the store currency is IRT with 0 decimals); the lowest
+  variation price for a variable item; `null` without a price.
+* `image`: the `woocommerce_thumbnail` URL forced to https, or `null`.
+* No accompanying items → `200 {"items": []}`. Unknown, unpublished or variation
+  id → `404 {"code":"not_found"}`. `Cache-Control: public, max-age=60`.
+* CORS comes from WordPress core (`rest_send_cors_headers`), like every non-Store
+  API route.
+
+## Store API CORS for the chat origin (WP-127)
+
+The Store API sends `Access-Control-Allow-Origin` only to origins accepted by
+`is_allowed_http_origin()`. The plugin adds the chat origin
+(`ts_chat_iframe_origin()` from the theme, default
+`https://chat.tehranspeaker.com`, filter `ts_chat_api_chat_origin`) **only**
+while the REST request being served is a `GET`/`HEAD` to
+
+* `/wc/store/v1/products/{id}`
+* `/wc/store/v1/products` (e.g. `?parent={id}&type=variation`)
+
+Cart, checkout, order and every write stay closed to it; nothing is wildcarded,
+and outside a REST request (admin-ajax, wp-login) the origin is never allowed.
+
+```sh
+curl -sI -H 'Origin: https://chat.tehranspeaker.com' https://www.tehranspeaker.com/wp-json/wc/store/v1/products/281821 | grep -i allow-origin
+# access-control-allow-origin: https://chat.tehranspeaker.com
+curl -sI -H 'Origin: https://chat.tehranspeaker.com' https://www.tehranspeaker.com/wp-json/wc/store/v1/cart | grep -ic allow-origin
+# 0
+```
+
 ## Tests
 
 ```sh
@@ -105,3 +157,6 @@ php tests/run.php    # stub WordPress + stub PWSMS, real plugin code
 3. Give the same secret to the chatbot server.
 4. Probe: `curl -s -o /dev/null -w '%{http_code}' -X POST https://www.tehranspeaker.com/wp-json/ts-chat/v1/stock-alerts`
    → `401` (configured) — `503` means the secret is not set, `404` that the plugin is not active.
+5. Probe the public parts (no secret needed):
+   `curl -s https://www.tehranspeaker.com/wp-json/ts-chat/v1/products/281821/companions` → `{"items":[…]}`,
+   and the two CORS `curl -sI` lines above.

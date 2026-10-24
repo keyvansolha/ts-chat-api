@@ -26,6 +26,7 @@ namespace {
 		'contacts'   => [],
 		'sms'        => [],
 		'archive'    => [],
+		'images'     => [],
 		'next_id'    => 5000,
 		'now'        => time(),
 		'notif'      => true,
@@ -65,6 +66,7 @@ namespace {
 	}
 	function is_admin() { return false; }
 	function register_post_type() {}
+	function __return_true() { return true; }
 	function register_rest_route( $ns, $route, $args ) { $GLOBALS['ts_t']['routes'][ '/' . $ns . $route ] = $args; }
 
 	class WP_Error {
@@ -76,7 +78,8 @@ namespace {
 	function is_wp_error( $value ) { return $value instanceof WP_Error; }
 
 	class WP_REST_Request {
-		public $headers = []; public $params = []; public $json = null; public $route = '';
+		public $headers = []; public $params = []; public $json = null; public $route = ''; public $method = 'GET';
+		public function get_method() { return $this->method; }
 		public function get_header( $name ) { return $this->headers[ strtolower( str_replace( '-', '_', $name ) ) ] ?? null; }
 		public function get_json_params() { return $this->json; }
 		public function get_param( $key ) { return $this->params[ $key ] ?? null; }
@@ -143,7 +146,12 @@ namespace {
 		public function is_type( $type ) { return $this->p['type'] === $type; }
 		public function get_permalink() { return $this->p['url']; }
 		public function get_meta( $key, $single = true ) { return get_post_meta( $this->p['id'], $key, true ); }
+		public function get_name() { return $this->p['name'] ?? ''; }
+		public function get_image_id() { return $this->p['image'] ?? 0; }
+		public function get_price() { return $this->p['price'] ?? ''; }
+		public function get_variation_price( $which = 'min' ) { return $this->p['min_price'] ?? ''; }
 	}
+	function wp_get_attachment_image_url( $id, $size ) { return $GLOBALS['ts_t']['images'][ $id ][ $size ] ?? false; }
 	function ts_product( array $p ) { $GLOBALS['ts_t']['products'][ $p['id'] ] = new TsProduct( $p ); }
 	function wc_get_product( $id ) { return $GLOBALS['ts_t']['products'][ (int) $id ] ?? false; }
 
